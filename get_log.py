@@ -9,9 +9,6 @@ import argparse
 from requests.exceptions import HTTPError
 from requests.auth import HTTPBasicAuth
 
-workflow_id = "66431c43-af28-4df3-a678-7990db3c8a73"
-task_name = "SCATA.Count"
-path_secrets_file = "/Users/chunj/Documents/keys/secrets-aws.json"
 
 def get_secrets(path_secrets_file):
 
@@ -19,6 +16,7 @@ def get_secrets(path_secrets_file):
         data = json.loads(fin.read())
 
     return data
+
 
 def prep_api_call(secrets):
 
@@ -30,6 +28,7 @@ def prep_api_call(secrets):
 
     return url, auth
 
+
 def get_metadata(secrets, workflow_id):
 
     base_url, auth = prep_api_call(secrets)
@@ -37,11 +36,8 @@ def get_metadata(secrets, workflow_id):
     try:
         response = requests.patch(
             url=f"{base_url}/{workflow_id}/metadata",
-            headers={
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            },
-            auth=auth
+            headers={"Content-Type": "application/json", "Accept": "application/json"},
+            auth=auth,
         )
 
         # if response.status_code == 200:
@@ -56,10 +52,7 @@ def get_metadata(secrets, workflow_id):
 def main(path_secret, workflow_id, task_name):
 
     # get metadata via Swagger
-    metadata = get_metadata(
-        get_secrets(path_secrets_file),
-        workflow_id
-    )
+    metadata = get_metadata(get_secrets(path_secret), workflow_id)
 
     print(json.dumps(metadata, indent=2))
 
@@ -70,10 +63,7 @@ def main(path_secret, workflow_id, task_name):
 
     # run aws CLI to extract log stream name
     proc = subprocess.Popen(
-        [
-            "aws", "batch", "describe-jobs", "--jobs", job_id
-        ],
-        stdout=subprocess.PIPE
+        ["aws", "batch", "describe-jobs", "--jobs", job_id], stdout=subprocess.PIPE
     )
 
     stdout, stderr = proc.communicate()
@@ -83,15 +73,13 @@ def main(path_secret, workflow_id, task_name):
 
     print(log_stream_name)
 
-
     # run AWS CLI to extract the actual log
     proc = subprocess.Popen(
         "aws logs get-log-events --log-group-name {} --log-stream-name {} | jq .events[].message".format(
-            "/aws/batch/job",
-            log_stream_name
+            "/aws/batch/job", log_stream_name
         ),
         stdout=subprocess.PIPE,
-        shell=True
+        shell=True,
     )
 
     stdout, stderr = proc.communicate()
@@ -108,23 +96,25 @@ def parse_arguments():
         action="store",
         dest="path_secret",
         help="path to secret file",
-        required=True
+        required=True,
     )
 
     parser.add_argument(
-        "--workflow-id", "-w",
+        "--workflow-id",
+        "-w",
         action="store",
         dest="workflow_id",
         help="Workflow ID",
-        required=True
+        required=True,
     )
 
     parser.add_argument(
-        "--task-name", "-t",
+        "--task-name",
+        "-t",
         action="store",
         dest="task_name",
         help="the name of the task",
-        required=True
+        required=True,
     )
 
     # parse arguments
@@ -141,8 +131,4 @@ if __name__ == "__main__":
     # task_name = "SCATA.Count"
     # path_secrets_file = "/Users/chunj/Documents/keys/secrets-aws.json"
 
-    main(
-        params.path_secret,
-        params.workflow_id,
-        params.task_name
-    )
+    main(params.path_secret, params.workflow_id, params.task_name)
