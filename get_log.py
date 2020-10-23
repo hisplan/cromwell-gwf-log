@@ -35,7 +35,7 @@ def get_metadata(secrets, workflow_id):
 
     try:
         response = requests.patch(
-            url=f"{base_url}/{workflow_id}/metadata",
+            url=f"{base_url}/{workflow_id}/metadata?expandSubWorkflows=true",
             headers={"Content-Type": "application/json", "Accept": "application/json"},
             auth=auth,
         )
@@ -57,7 +57,18 @@ def main(path_secret, workflow_id, task_name):
     print(json.dumps(metadata, indent=2))
 
     # extract job ID
-    job_id = metadata["calls"][task_name][0]["jobId"]
+    keys = task_name.split(".")
+    if len(keys) == 2:
+        # e.g. Sharp.CiteSeqCount
+        job_id = metadata["calls"][task_name][0]["jobId"]
+    elif len(keys) == 3:
+        # has one subworkflow
+        # e.g. Sharp.Preprocess.CiteSeqCount
+        key1 = keys[0] + "." + keys[1]
+        key2 = keys[1] + "." + keys[2]
+        job_id = metadata["calls"][key1][0]["subWorkflowMetadata"]["calls"][key2][0][
+            "jobId"
+        ]
 
     print(job_id)
 
