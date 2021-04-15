@@ -22,6 +22,9 @@ def prep_api_call(secrets):
 
     api_version = "v1"
     url = secrets["url"]
+
+    # remove a trailing slash
+    url = url[:-1] if url.endswith("/") else url
     url = f"{url}/api/workflows/{api_version}"
 
     auth = HTTPBasicAuth(secrets["username"], secrets["password"])
@@ -34,11 +37,17 @@ def get_metadata(secrets, workflow_id):
     base_url, auth = prep_api_call(secrets)
 
     try:
-        response = requests.patch(
+        response = requests.get(
             url=f"{base_url}/{workflow_id}/metadata?expandSubWorkflows=true",
             headers={"Content-Type": "application/json", "Accept": "application/json"},
             auth=auth,
         )
+
+        # response = requests.patch(
+        #     url=f"{base_url}/{workflow_id}/metadata?expandSubWorkflows=true",
+        #     headers={"Content-Type": "application/json", "Accept": "application/json"},
+        #     auth=auth,
+        # )
 
         # if response.status_code == 200:
         data = response.json()
