@@ -1,4 +1,4 @@
-# cromwell-aws-log
+# cromwell-gwf-log
 
 For a given task of your WDL/Cromwell workflow, this gets the job ID from AWS Batch, then prints out the log via AWS CloudWatch.
 
