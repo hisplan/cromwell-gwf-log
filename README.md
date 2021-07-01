@@ -1,5 +1,12 @@
 # cromwell-gwf-log
 
+## Prerequisites
+
+- AWS CLI
+- Python `requests` library
+
+## How to Use
+
 For a given task of your WDL/Cromwell workflow, this gets the job ID from AWS Batch, then prints out the log via AWS CloudWatch.
 
 ```bash
