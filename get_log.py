@@ -43,6 +43,7 @@ def get_metadata(secrets, workflow_id):
             auth=auth,
         )
 
+        # deprecated
         # response = requests.patch(
         #     url=f"{base_url}/{workflow_id}/metadata?expandSubWorkflows=true",
         #     headers={"Content-Type": "application/json", "Accept": "application/json"},
@@ -79,7 +80,7 @@ def main(path_secret, workflow_id, task_name):
             "jobId"
         ]
 
-    print(job_id)
+    print(f"AWS Batch Job ID: {job_id}")
 
     # run aws CLI to extract log stream name
     proc = subprocess.Popen(
@@ -91,7 +92,7 @@ def main(path_secret, workflow_id, task_name):
     data = json.loads(stdout.decode())
     log_stream_name = data["jobs"][0]["container"]["logStreamName"]
 
-    print(log_stream_name)
+    print(f"AWS Batch Log Stream Name: {log_stream_name}")
 
     # run AWS CLI to extract the actual log
     proc = subprocess.Popen(
