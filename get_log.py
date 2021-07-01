@@ -77,7 +77,8 @@ def get_job_id(metadata, task_name):
 
     return job_id
 
-def get_log_stream_name(job_id):
+
+def get_describe_job(job_id):
 
     # run aws CLI to extract log stream name
     proc = subprocess.Popen(
@@ -87,9 +88,26 @@ def get_log_stream_name(job_id):
     stdout, stderr = proc.communicate()
 
     data = json.loads(stdout.decode())
-    log_stream_name = data["jobs"][0]["container"]["logStreamName"]
+    job = data["jobs"][0]
+
+    return job
+
+
+def get_log_stream_name(job):
+
+    log_stream_name = job["container"]["logStreamName"]
 
     return log_stream_name
+
+def get_job_status(job):
+
+    status = job["status"]
+
+    # might not be available
+    status_reason = job["statusReason"] if "statusReason" in job else "n/a"
+    container_reason = job["container"]["reason"] if "reason" in job["container"] else ""
+
+    return status, status_reason, container_reason
 
 
 def get_log_contents(log_stream_name):
@@ -124,9 +142,16 @@ def main(path_secret, workflow_id, task_name):
 
     print(f"AWS Batch Job ID: {job_id}")
 
-    log_stream_name = get_log_stream_name(job_id=job_id)
+    job = get_describe_job(job_id=job_id)
+
+    log_stream_name = get_log_stream_name(job=job)
 
     print(f"AWS Batch Log Stream Name: {log_stream_name}")
+
+    status, status_reason, container_reason = get_job_status(job=job)
+
+    print(f"Container Status: {status} - {status_reason}")
+    print(container_reason)
 
     exit_code, stdout, stderr = get_log_contents(log_stream_name=log_stream_name)
 
