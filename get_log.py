@@ -59,12 +59,7 @@ def get_metadata(secrets, workflow_id):
         print(err)
 
 
-def main(path_secret, workflow_id, task_name):
-
-    # get metadata via Swagger
-    metadata = get_metadata(get_secrets(path_secret), workflow_id)
-
-    print(json.dumps(metadata, indent=2))
+def get_job_id(metadata, task_name):
 
     # extract job ID
     keys = task_name.split(".")
@@ -80,7 +75,9 @@ def main(path_secret, workflow_id, task_name):
             "jobId"
         ]
 
-    print(f"AWS Batch Job ID: {job_id}")
+    return job_id
+
+def get_log_stream_name(job_id):
 
     # run aws CLI to extract log stream name
     proc = subprocess.Popen(
@@ -92,7 +89,10 @@ def main(path_secret, workflow_id, task_name):
     data = json.loads(stdout.decode())
     log_stream_name = data["jobs"][0]["container"]["logStreamName"]
 
-    print(f"AWS Batch Log Stream Name: {log_stream_name}")
+    return log_stream_name
+
+
+def get_log_contents(log_stream_name):
 
     # run AWS CLI to extract the actual log
     proc = subprocess.Popen(
@@ -105,7 +105,32 @@ def main(path_secret, workflow_id, task_name):
 
     stdout, stderr = proc.communicate()
 
-    print(stdout.decode())
+    stdout = stdout.decode()
+
+    if stderr:
+        stderr = stderr.decode()
+
+    return proc.returncode, stdout, stderr
+
+
+def main(path_secret, workflow_id, task_name):
+
+    # get metadata via Swagger
+    metadata = get_metadata(get_secrets(path_secret), workflow_id)
+
+    print(json.dumps(metadata, indent=2))
+
+    job_id = get_job_id(metadata=metadata, task_name=task_name)
+
+    print(f"AWS Batch Job ID: {job_id}")
+
+    log_stream_name = get_log_stream_name(job_id=job_id)
+
+    print(f"AWS Batch Log Stream Name: {log_stream_name}")
+
+    exit_code, stdout, stderr = get_log_contents(log_stream_name=log_stream_name)
+
+    print(stdout)
 
 
 def parse_arguments():
