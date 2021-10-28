@@ -78,16 +78,22 @@ def get_job_id(metadata, task_name):
     return job_id
 
 
-def get_describe_job(job_id):
+def get_describe_job(job_id: str, region: str):
 
     # run aws CLI to extract log stream name
     proc = subprocess.Popen(
-        ["aws", "batch", "describe-jobs", "--jobs", job_id], stdout=subprocess.PIPE
+        ["aws", "batch", "describe-jobs", "--jobs", job_id, "--region", region],
+        stdout=subprocess.PIPE,
     )
 
     stdout, stderr = proc.communicate()
 
     data = json.loads(stdout.decode())
+
+    if len(data["jobs"]) == 0:
+        print(f"AWS Batch Job ID {job_id} returned nothing. Maybe the job data has been erased?")
+        exit(1)
+
     job = data["jobs"][0]
 
     return job
@@ -95,9 +101,13 @@ def get_describe_job(job_id):
 
 def get_log_stream_name(job):
 
+    if not "logStreamName" in job["container"]:
+        return None
+
     log_stream_name = job["container"]["logStreamName"]
 
     return log_stream_name
+
 
 def get_job_status(job):
 
@@ -105,17 +115,19 @@ def get_job_status(job):
 
     # might not be available
     status_reason = job["statusReason"] if "statusReason" in job else "n/a"
-    container_reason = job["container"]["reason"] if "reason" in job["container"] else ""
+    container_reason = (
+        job["container"]["reason"] if "reason" in job["container"] else ""
+    )
 
     return status, status_reason, container_reason
 
 
-def get_log_contents(log_stream_name):
+def get_log_contents(log_stream_name: str, region: str):
 
     # run AWS CLI to extract the actual log
     proc = subprocess.Popen(
-        "aws logs get-log-events --log-group-name {} --log-stream-name {} | jq .events[].message".format(
-            "/aws/batch/job", log_stream_name
+        "aws logs get-log-events --log-group-name {} --log-stream-name {} --region {} | jq .events[].message".format(
+            "/aws/batch/job", log_stream_name, region
         ),
         stdout=subprocess.PIPE,
         shell=True,
@@ -131,7 +143,7 @@ def get_log_contents(log_stream_name):
     return proc.returncode, stdout, stderr
 
 
-def main(path_secret, workflow_id, task_name):
+def main(path_secret, workflow_id, task_name, region):
 
     # get metadata via Swagger
     metadata = get_metadata(get_secrets(path_secret), workflow_id)
@@ -142,20 +154,27 @@ def main(path_secret, workflow_id, task_name):
 
     print(f"AWS Batch Job ID: {job_id}")
 
-    job = get_describe_job(job_id=job_id)
+    job = get_describe_job(job_id=job_id, region=region)
 
     log_stream_name = get_log_stream_name(job=job)
 
-    print(f"AWS Batch Log Stream Name: {log_stream_name}")
+    print(
+        "AWS Batch Log Stream Name: {}".format(
+            log_stream_name if log_stream_name else "N/A"
+        )
+    )
 
     status, status_reason, container_reason = get_job_status(job=job)
 
     print(f"Container Status: {status} - {status_reason}")
     print(container_reason)
 
-    exit_code, stdout, stderr = get_log_contents(log_stream_name=log_stream_name)
+    if log_stream_name:
+        exit_code, stdout, stderr = get_log_contents(
+            log_stream_name=log_stream_name, region=region
+        )
 
-    print(stdout)
+        print(stdout)
 
 
 def parse_arguments():
@@ -188,6 +207,15 @@ def parse_arguments():
         required=True,
     )
 
+    parser.add_argument(
+        "--region",
+        "-r",
+        action="store",
+        dest="region",
+        help="AWS region",
+        required=True,
+    )
+
     # parse arguments
     params = parser.parse_args()
 
@@ -202,4 +230,4 @@ if __name__ == "__main__":
     # task_name = "SCATA.Count"
     # path_secrets_file = "/Users/chunj/Documents/keys/secrets-aws.json"
 
-    main(params.path_secret, params.workflow_id, params.task_name)
+    main(params.path_secret, params.workflow_id, params.task_name, params.region)
