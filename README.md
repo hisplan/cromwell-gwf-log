@@ -11,9 +11,10 @@ For a given task of your WDL/Cromwell workflow, this gets the job ID from AWS Ba
 
 ```bash
 python get_log.py \
-    -k ~/keys/secrets-aws.json \
+    -k ~/keys/cromwell-secrets.json \
     -w 66431c43-af28-4df3-a678-7990db3c8a73 \
-    -t SCATA.Count
+    -t CellRangerGex.Count \
+    -r us-east-1
 ```
 
 In a normal case, a task name consists of three names:
@@ -26,9 +27,10 @@ e.g. `Sharp.Preprocess.CiteSeqCount`
 
 ```bash
 python get_log.py \
-    -k ~/keys/secrets-aws.json \
+    -k ~/keys/cromwell-secrets.json \
     -w dc41ed29-0e92-415f-ba6e-d574c80d9960 \
-    -t Sharp.Preprocess.CiteSeqCount
+    -t Sharp.Preprocess.CiteSeqCount \
+    -r us-east-1
 ```
 
 In the case where a job was restarted and already completed tasks were picked up from the cache, do not specify a workflow name in the task name. For example:
@@ -43,5 +45,6 @@ e.g. `Preprocess.CiteSeqCount`
 python get_log.py \
     -k ~/keys/secrets-aws.json \
     -w dc41ed29-0e92-415f-ba6e-d574c80d9960 \
-    -t Preprocess.CiteSeqCount
+    -t Preprocess.CiteSeqCount \
+    -r us-east-1
 ```
