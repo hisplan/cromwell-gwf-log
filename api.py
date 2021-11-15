@@ -77,7 +77,17 @@ def get_describe_job(job_id: str, region: str):
 
     # run aws CLI to extract log stream name
     proc = subprocess.Popen(
-        ["aws", "batch", "describe-jobs", "--jobs", job_id, "--region", region],
+        [
+            "aws",
+            "batch",
+            "describe-jobs",
+            "--jobs",
+            job_id,
+            "--region",
+            region,
+            "--output",
+            "json",
+        ],
         stdout=subprocess.PIPE,
     )
 
@@ -123,7 +133,7 @@ def get_log_contents(log_stream_name: str, region: str):
 
     # run AWS CLI to extract the actual log
     proc = subprocess.Popen(
-        "aws logs get-log-events --log-group-name {} --log-stream-name {} --region {} | jq .events[].message".format(
+        "aws logs get-log-events --log-group-name {} --log-stream-name {} --region {} --output json | jq .events[].message".format(
             "/aws/batch/job", log_stream_name, region
         ),
         stdout=subprocess.PIPE,
