@@ -3,6 +3,7 @@
 
 import argparse
 import json
+import os
 import api
 
 
@@ -46,7 +47,7 @@ def handle_call(task: str, call: str, region: str):
                     )
                     print(f"Container Status: {status} - {status_reason}")
                     print(container_reason)
-
+                    
                     with open(f"errors/{job_id}-{job_name}.json", "wt") as fout:
                         json.dump(job, fout, indent=4)
                     print()
@@ -110,5 +111,7 @@ if __name__ == "__main__":
 
     # workflow_id = "66431c43-af28-4df3-a678-7990db3c8a73"
     # path_secrets_file = "/Users/chunj/Documents/keys/secrets-aws.json"
+
+    os.makedirs("errors", exist_ok=True)
 
     main(params.path_secret, params.workflow_id, params.region)
