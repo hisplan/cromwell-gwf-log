@@ -47,7 +47,7 @@ def handle_call(task: str, call: str, region: str):
                     )
                     print(f"Container Status: {status} - {status_reason}")
                     print(container_reason)
-                    
+
                     with open(f"errors/{job_id}-{job_name}.json", "wt") as fout:
                         json.dump(job, fout, indent=4)
                     print()
@@ -72,6 +72,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
+        "--key",
         "-k",
         action="store",
         dest="path_secret",
