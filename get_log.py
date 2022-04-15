@@ -45,6 +45,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
+        "--key",
         "-k",
         action="store",
         dest="path_secret",
@@ -88,9 +89,5 @@ def parse_arguments():
 if __name__ == "__main__":
 
     params = parse_arguments()
-
-    # workflow_id = "66431c43-af28-4df3-a678-7990db3c8a73"
-    # task_name = "SCATA.Count"
-    # path_secrets_file = "/Users/chunj/Documents/keys/secrets-aws.json"
 
     main(params.path_secret, params.workflow_id, params.task_name, params.region)
